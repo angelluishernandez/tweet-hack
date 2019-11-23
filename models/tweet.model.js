@@ -1,14 +1,27 @@
-const mongoose = require('mongoose');
-require('./comment.model')
+const mongoose = require("mongoose");
+require("./comment.model");
 
-const tweetSchema = new mongoose.Schema({
-  // TODO
-}, { timestamps: true })
+const tweetSchema = new mongoose.Schema(
+  {
+    body: {
+      type: String,
+      required: true
+    },
+    image: String,
+    user: { 
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true }
 
-tweetSchema.pre('save', function (next) {
-  next()
+  
+  },
+  { timestamps: true }
+);
+
+tweetSchema.pre("save", function(next) {
+  next();
 });
 
-const Tweet = mongoose.model('Tweet', tweetSchema);
+const Tweet = mongoose.model("Tweet", tweetSchema);
 
 module.exports = Tweet;

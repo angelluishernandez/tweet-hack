@@ -1,10 +1,11 @@
-const User = require('../models/user.model');
-const mongoose = require('mongoose');
-const mailer = require('../config/mailer.config');
+const User = require("../models/user.model");
+const Tweets = require("../models/tweet.model")
+const mongoose = require("mongoose");
+const mailer = require("../config/mailer.config");
 
 module.exports.new = (_, res) => {
-  res.render('users/new', { user: new User() })
-}
+  res.render("users/new", { user: new User() });
+};
 
 module.exports.create = (req, res, next) => {
   const user = new User({
@@ -12,58 +13,109 @@ module.exports.create = (req, res, next) => {
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
-    avatar: req.body.avatar,
-    bootcamp: req.body.bootcamp
-  })
+    avatar: req.body.avatar
+  });
 
-  user.save()
-    .then((user) => {
-      mailer.sendValidateEmail(user)
-      res.redirect('/login')
+  user
+    .save()
+    .then(user => {
+      mailer.sendValidateEmail(user);
+      res.redirect("/login");
     })
     .catch(error => {
       if (error instanceof mongoose.Error.ValidationError) {
-        res.render('users/new', { user, error: error.errors })
+        res.render("users/new", { user, error: error.errors });
       } else if (error.code === 11000) {
-        res.render('users/new', {
+        res.render("users/new", {
           user: {
             ...user,
             password: null
           },
-          genericError: 'User exists'
-        })
+          genericError: "User exists"
+        });
       } else {
         next(error);
       }
-    })
-}
+    });
+};
 
 module.exports.validate = (req, res, next) => {
   User.findOne({ validateToken: req.params.token })
     .then(user => {
       if (user) {
-        user.validated = true
-        user.save()
+        user.validated = true;
+        user
+          .save()
           .then(() => {
-            res.redirect('/login')
+            res.redirect("/login");
           })
-          .catch(next)
+          .catch(next);
       } else {
-        res.redirect('/')
+        res.redirect("/");
       }
     })
-    .catch(next)
-}
+    .catch(next);
+};
 
 module.exports.login = (_, res) => {
-  res.render('users/login')
-}
+  res.render("users/login");
+};
 
 module.exports.doLogin = (req, res, next) => {
-  res.send('TODO')
-}
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.render("users/login", { user: req.body });
+  }
+  User.findOne({ email: email, validated: true })
+    .then(user => {
+      if (!user) {
+        res.render("users/login", {
+          user: req.body,
+          error: { password: "invalid password" }
+        });
+      } else {
+        console.log(user)
+        return user.checkPassword(password).then(match => {
+          if (!match) {
+            res.render("users/login", {
+              user: req.body,
+              error: { password: "invalid password" }
+            });
+          } else {
+            req.session.user = user;
+            res.redirect('/');
+          }
+        });
+      }
+    })
+    .catch(error => {
+      if(error instanceof mongoose.Error.ValidationError) {
+        res.render('users/login', {
+          user: req.body,
+          error: error.error
+        })
+      } else {
+        next(error);
+      }
+    });
+};
 
 module.exports.logout = (req, res) => {
   req.session.destroy();
-  res.redirect('/login');
-}
+  res.redirect("/login");
+};
+
+module.exports.profile = (req, res, next) => {
+  const username = req.params.username;
+
+  User.findOne({username: username})
+  .populate({path: 'tweets', populate: {path: 'user'}})
+    .then(user => {
+      Tweets.find({user: user.id})
+        .then(tweets => {
+          res.render('users/index', {tweets})
+        })
+    })
+    .catch(next)
+};

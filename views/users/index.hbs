@@ -1,21 +1,37 @@
-<h1>hello {{currentUser.name}}</h1>
+<div class="row">
+  <div class="col-2">
+    <img src="{{currentUser.avatar}}" alt="user_pic" class="w-100">
+    <h4><a href="">@{{currentUser.username}}</a></h4>
+    <p>{{currentUser.bio}}</p>
+    <form action="/logout" method="post">
+      <button class="btn btn-danger" type="submit">Log out</button>
+    </form>
+  </div>
+  <div class="col-6">
+    <form action="">
+      <div class="mb-3">
+        <textarea name="body" id="tweet-body" class="w-100" placeholder="Enter text"></textarea>
+        <input class="w-100 mb-2" type="text" name="image" id="tweet-img" placeholder="Url" />
+        <button type="submit" class="btn btn-success">Send</button>
+      </div>
 
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Email</th>
-      <th>Password</th>
-    </tr>
-  </thead>
 
-  <tbody>
-    {{#each users as |user|}}
-      <tr>
-        <td>{{user.name}}</td>
-        <td>{{user.email}}</td>
-        <td>{{user.password}}</td>
-      </tr>
-    {{/each}}
-  </tbody>
-</table>
+    </form>
+    <div>
+      {{#each tweets as |t|}}
+      <div class="card mb-3">
+        <div class="card-body">
+          <p class="card-text">{{t.body}}</p>
+          <a href="/users/{{t.user.username}}" class="btn btn-primary">@{{t.user.username}}</a>
+          <img class="w-100 mt-3" src="{{ t.image }}">
+        </div>
+      </div>
+      {{/each}}
+    </div>
+
+
+  </div>
+  <div class="col-4">
+    <input class="w-100" type="text" name="search" id="search" placeholder="Search">
+  </div>
+</div>
